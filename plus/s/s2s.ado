@@ -36,22 +36,6 @@ program define s2s, eclass byable(recall) sortpreserve
 		noi dis in yellow _newline `"Warning: When the "lny" option is specified, ensure that the left-hand side variable is expressed in logarithmic terms, while the poverty line variables remain in level terms."'
 	}
 	
-	//Indicator checklist - do later	
-	/*
-	if "`indicators'"~="" local indicators `=lower("`indicators'")'
-	else local indicators fgt0	
-	local fgtlist
-	local gelist
-	foreach ind of local indicators {
-		if  "`ind'"=="fgt0" local fgtlist "`fgtlist' `ind'"
-		if  "`ind'"=="fgt1" local fgtlist "`fgtlist' `ind'"
-		if  "`ind'"=="fgt2" local fgtlist "`fgtlist' `ind'"
-		if  "`ind'"=="ge0" local gelist "`gelist' `ind'"
-		if  "`ind'"=="ge1" local gelist "`gelist' `ind'"
-		if  "`ind'"=="ge2" local gelist "`gelist' `ind'"
-	}
-	*/
-	
 	local method `=lower("`method'")'
 	if "`method'"~="empirical" & "`method'"~="normal" {
 		noi dis as error "Method `method' is now allowed. Allowed methods: empirical and normal."
@@ -77,7 +61,6 @@ program define s2s, eclass byable(recall) sortpreserve
 			error 198
 		}
 	}
-	*if ("`index'" == "") local index "gini"
 	
 	/*
 	*** area options
@@ -132,7 +115,7 @@ program define s2s, eclass byable(recall) sortpreserve
 	*/
 	
 	//missing observation check
-	marksample touse	
+	marksample touse, novarlist	
 	gettoken lhs varlist: varlist
 	local flist `"`varlist' `wvar' `by' `cluster' `strata' `pline'"'
 	local okvarlist `varlist'

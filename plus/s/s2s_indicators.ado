@@ -35,8 +35,8 @@ program define s2s_indicators
 	//condition list on indicator later
 	
 	*USE POVERTY LINE IN 1ST PERIOD
-	qui gen double `poorh' = (`welfare' < `pline') 
-	qui gen double `gaph'   = `poorh'*((`pline'- `welfare')/`pline')^(`alpha')
+	qui gen double `poorh' = (`welfare' < `pline') if `welfare'~=.
+	qui gen double `gaph'   = `poorh'*((`pline'- `welfare')/`pline')^(`alpha') if `welfare'~=.
 		
 	svy: mean `poorh'
 	mat `p1h'     = e(b)
@@ -51,7 +51,7 @@ program define s2s_indicators
 	mat `p3h_var' = e(V)
 	  
 	if "`pline2'"~="" {
-		qui gen double `epoorh' = (`welfare' < `pline2') 
+		qui gen double `epoorh' = (`welfare' < `pline2') if `welfare'~=.
 		svy: mean `epoorh'
 		mat `p4h'     = e(b)
 		mat `p4h_var' = e(V)
@@ -62,7 +62,7 @@ program define s2s_indicators
 	}
 	
 	if "`vline'"~="" {
-		qui gen double `vpoorh' = (`welfare' >= `pline' & `welfare'< `vline') 
+		qui gen double `vpoorh' = (`welfare' >= `pline' & `welfare'< `vline') if `welfare'~=.
 		svy: mean `vpoorh'
 		mat `p5h'     = e(b)
 		mat `p5h_var' = e(V)
