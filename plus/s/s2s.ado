@@ -120,6 +120,7 @@ program define s2s, eclass byable(recall) sortpreserve
 	local flist `"`varlist' `wvar' `by' `cluster' `strata' `pline'"'
 	local okvarlist `varlist'
 	markout `touse' `flist' 
+	*svyset `cluster' [w= `wtstats'], strata(`strata') singleunit(centered)
 	
 	** Save original data	
 	tempfile dataori datafrm datato dataset datatobs
