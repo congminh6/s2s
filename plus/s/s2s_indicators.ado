@@ -30,7 +30,8 @@ program define s2s_indicators
     tempvar poorh gaph epoorh vpoorh 
 	
 	if "`std'"=="" local optstd *
-	svyset `cluster' [w= `weight'], strata(`strata') singleunit(centered)
+	*svyset `cluster' [w= `weight'], strata(`strata') singleunit(centered)
+	svyset `cluster' [w= `weight'], strata(`strata') singleunit(certainty)
 	
 	//condition list on indicator later
 	

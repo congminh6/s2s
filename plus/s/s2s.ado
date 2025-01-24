@@ -215,6 +215,7 @@ program define s2s, eclass byable(recall) sortpreserve
 			
 			noisily _dots `i' 0
 		} //rep
+		noisily _dots
 		
 		clear			
 		mat colnames `allp' = poor gap pgap epoor vpoor mean m5 m10 m25 m50 m75 m90 m95
@@ -247,16 +248,20 @@ program define s2s, eclass byable(recall) sortpreserve
 		set seed `bseed'
 		tempfile data01 data02
 		qui forv b = 1/`brep' { 	       
-			tempname varu vare V all poor poor_var gap gap_var pgap pgap_var epoor epoor_var vpoor vpoor_var mean mean_var m5 m5_var m10 m10_var m25 m25_var m50 m50_var m75 m75_var m90 m90_var m95 m95_var r2_m n_m tmp1
+			tempname varu vare V all poor poor_var gap gap_var pgap pgap_var epoor epoor_var vpoor vpoor_var mean mean_var m5 m5_var m10 m10_var m25 m25_var m50 m50_var m75 m75_var m90 m90_var m95 m95_var r2_m n_m tmp1 single
 			
 			use `dataori' if `touse', clear
 			//resample the whole data -- size of data year can be different
 			keep if `by'==`from'
+			svydescribe, gen(`single')
+			drop if `single'==1
 			bsample, strata(`strata') cluster(`cluster')             
 			save `data01', replace
 			
 			use `dataori' if `touse', clear			
 			keep if `by'==`to'
+			svydescribe, gen(`single')
+			drop if `single'==1
 			bsample, strata(`strata') cluster(`cluster')             
 			append using `data01'
 			
@@ -282,11 +287,15 @@ program define s2s, eclass byable(recall) sortpreserve
 			save `data02', replace
 			
 			keep if `by'==`from'
+			svydescribe, gen(`single')
+			drop if `single'==1
 			bsample, strata(`strata') cluster(`cluster')             
 			save `data01', replace
 			
 			use `data02', clear			
 			keep if `by'==`to'
+			svydescribe, gen(`single')
+			drop if `single'==1
 			bsample, strata(`strata') cluster(`cluster')             
 			append using `data01'
 						
@@ -399,6 +408,7 @@ program define s2s, eclass byable(recall) sortpreserve
 			
 			noisily _dots `i' 0
 		} //rep
+		noisily _dots
 		
 		clear			
 		mat colnames `allp' = poor gap pgap epoor vpoor mean m5 m10 m25 m50 m75 m90 m95
@@ -427,19 +437,24 @@ program define s2s, eclass byable(recall) sortpreserve
 	* Standard errors - normal	
 	qui if "`method'"=="normal" {
 		display _newline  " "
-		noi dis _newline in gr `"Standard errors - Running with `rep' reps and `brep' bootstraps (`rep'*`brep')"'		
+		noi _dots 0, title(Standard errors - Running with `rep' reps and `brep' bootstraps (`rep'*`brep')) reps(`=`rep'*`brep'')
+		*noi dis _newline in gr `"Standard errors - Running with `rep' reps and `brep' bootstraps (`rep'*`brep')"'		
 		set seed `bseed'
 		tempfile data01 data02
 		forvalues b = 1/`brep' {
-			tempname all poor poor_var gap gap_var pgap pgap_var epoor epoor_var vpoor vpoor_var mean mean_var m5 m5_var m10 m10_var m25 m25_var m50 m50_var m75 m75_var m90 m90_var m95 m95_var r2_m n_m tmp1
+			tempname all poor poor_var gap gap_var pgap pgap_var epoor epoor_var vpoor vpoor_var mean mean_var m5 m5_var m10 m10_var m25 m25_var m50 m50_var m75 m75_var m90 m90_var m95 m95_var r2_m n_m tmp1 single
 			
 			use `dataori' if `touse', clear 
 			keep if `by'==`from'
+			svydescribe, gen(`single')
+			drop if `single'==1
 			bsample, strata(`strata') cluster(`cluster')             
 			save `data01', replace
 			
 			use `dataori' if `touse', clear			
 			keep if `by'==`to'
+			svydescribe, gen(`single')
+			drop if `single'==1
 			bsample, strata(`strata') cluster(`cluster')             
 			append using `data01'
 						
@@ -462,11 +477,15 @@ program define s2s, eclass byable(recall) sortpreserve
 
 			use `dataori' if `touse', clear
 			keep if `by'==`from'
+			svydescribe, gen(`single')
+			drop if `single'==1
 			bsample, strata(`strata') cluster(`cluster')             
 			save `data01', replace
 			
 			use `dataori' if `touse', clear			
 			keep if `by'==`to'
+			svydescribe, gen(`single')
+			drop if `single'==1
 			bsample, strata(`strata') cluster(`cluster')             
 			append using `data01'
 			
@@ -521,6 +540,7 @@ program define s2s, eclass byable(recall) sortpreserve
 			mat `allb' = nullmat(`allb') \ (`tmp1')			
 			noisily _dots `b' 0
 		} //brep
+		_dots
 		
 		clear
 		mat colnames `allb' = poor gap pgap epoor vpoor mean m5 m10 m25 m50 m75 m90 m95		
