@@ -237,7 +237,7 @@ program define s2s, eclass byable(recall) sortpreserve
 			rename __obid id
 			keep id yh_s*
 			save "`saving'", `replace'
-			noi dis `"file "`saving'" saved"'
+			noi dis _newline `"file "`saving'" saved"'
 		} //save
 	} //empirical
 
@@ -430,7 +430,7 @@ program define s2s, eclass byable(recall) sortpreserve
 			rename __obid id
 			keep id yh_s*
 			save "`saving'", `replace'
-			noi dis `"file "`saving'" saved"'
+			noi dis _newline `"file "`saving'" saved"'
 		} //saving
 	} //normal est point
 	
