@@ -1,4 +1,4 @@
-*! version 1.0  3Nov2014
+*! version 1.0  20Feb2025
 *! Minh Cong Nguyen - mnguyen3@worldbank.org
 *! Hai-Anh Hoang Dang - hdang@worldbank.org
 *! Ksenia Abanokova - kabanokova@worldbank.org
@@ -37,13 +37,12 @@ program define s2s, eclass byable(recall) sortpreserve
 	}
 	
 	local method `=lower("`method'")'
-	if "`method'"~="empirical" & "`method'"~="normal" {
-		noi dis as error "Method `method' is now allowed. Allowed methods: empirical and normal."
+	if "`method'"~="empirical" & "`method'"~="normal" & "`method'"~="probit" & "`method'"~="logit" {
+		noi dis as error "Method `method' is now allowed. Allowed methods: empirical, normal, probit, and logit."
 		error 198
 	}
 	
 	preserve
-	cap mat drop _all
 	
 	*** Poverty lines	
 	if "`pline2'"~="" {
@@ -122,6 +121,12 @@ program define s2s, eclass byable(recall) sortpreserve
 	markout `touse' `flist' 
 	*svyset `cluster' [w= `wtstats'], strata(`strata') singleunit(centered)
 	
+	*** Poverty status in the base survey 
+	tempvar pr	
+	if "`lny'" ~= "" qui gen `pr'= `lhs'< ln(`pline') if `lhs'<. & `by'==`from' & `touse'
+	else qui gen `pr'= `lhs'< `pline' if `lhs'<. & `by'==`from' & `touse'
+	local poorbit `pr'
+
 	** Save original data	
 	tempfile dataori datafrm datato dataset datatobs
 	qui save `dataori', replace
@@ -154,9 +159,21 @@ program define s2s, eclass byable(recall) sortpreserve
 	tempname all allp poorp gapp pgapp epoorp vpoorp meanp m5p m10p m25p m50p m75p m90p m95p 
 	tempname allb poorb seb gapb gapseb pgapb pgapseb epoorb epoorseb vpoorb vpoorseb meanb meanseb m5b m5seb m10b m10seb m25b m25seb m50b m50seb m75b m75seb m90b m90seb m95b m95seb __xb
 	
-	qui if "`method'"=="empirical" | "`method'"=="normal" {	
-		xtreg `lhs' `okvarlist' `weight' if `by'==`from', i(`cluster')
+	local regok = 0
+	if "`method'"=="empirical" | "`method'"=="normal" {	
+		cap xtreg `lhs' `okvarlist' `weight' if `by'==`from', i(`cluster')
+		if _rc==0 local regok = 1
+	}
+	else if "`method'"=="probit"  {
+		cap xtprobit `poorbit' `okvarlist' `weight' if `by'==`from', i(`cluster')
+		if _rc==0 local regok = 1
+	}
+	else { //if "`method'"=="logit" {
+		cap xtlogit `poorbit' `okvarlist' `weight' if `by'==`from', i(`cluster')
+		if _rc==0 local regok = 1
+	}
 	
+	qui if `regok'==1 {
 		local nfdata= e(N)
 		keep if `by'==`to'
 		predict double `__xb', xb
@@ -170,8 +187,11 @@ program define s2s, eclass byable(recall) sortpreserve
 		tempfile datatoxb
 		save `datatoxb', replace		
 	}
+	else {
+		noi dis "Unable to run the model (`method') - please check your data and model"
+		error 198
+	}
 	
-	cap mat drop _all		
 	// Simulate with empirical distribution of Point estimates
 	qui if "`method'"=="empirical" {		
 		display _newline " "
@@ -211,7 +231,7 @@ program define s2s, eclass byable(recall) sortpreserve
 			save `dataset`i'', replace
 			
 			//function on the indicators
-			s2s_indicators, welfare(`yh') weight(`wtstats') indicators(`indicators') cluster(`cluster') strata(`strata') pline(`pline') pline2(`pline2') vline(`vline') alpha(`alpha') resmat(`allp')
+			s2s_indicators, welfare(`yh') weight(`wtstats') indicators(`indicators') cluster(`cluster') strata(`strata') pline(`pline') pline2(`pline2') vline(`vline') alpha(`alpha') resmat(`allp') method("`method'")
 			
 			noisily _dots `i' 0
 		} //rep
@@ -328,7 +348,7 @@ program define s2s, eclass byable(recall) sortpreserve
 				if "`lny'" ~= "" gen double `yh' = exp(__xb_bs`b' + __ut_bs`b' + __et_bs`b')
 				else gen double `yh' = __xb_bs`b' + __ut_bs`b' + __et_bs`b'
 				
-				s2s_indicators, welfare(`yh') weight(`wtstats') indicators(`indicators') cluster(`cluster') strata(`strata') pline(`pline') pline2(`pline2') vline(`vline') alpha(`alpha') resmat(`all') std
+				s2s_indicators, welfare(`yh') weight(`wtstats') indicators(`indicators') cluster(`cluster') strata(`strata') pline(`pline') pline2(`pline2') vline(`vline') alpha(`alpha') resmat(`all') std method("`method'")
   
 				noisily _dots `i' 0
 			}
@@ -404,7 +424,7 @@ program define s2s, eclass byable(recall) sortpreserve
 			save `dataset`i'', replace
 
 			//function on the indicators
-			s2s_indicators, welfare(`yh') weight(`wtstats') indicators(`indicators') cluster(`cluster') strata(`strata') pline(`pline') pline2(`pline2') vline(`vline') alpha(`alpha') resmat(`allp')
+			s2s_indicators, welfare(`yh') weight(`wtstats') indicators(`indicators') cluster(`cluster') strata(`strata') pline(`pline') pline2(`pline2') vline(`vline') alpha(`alpha') resmat(`allp') method("`method'")
 			
 			noisily _dots `i' 0
 		} //rep
@@ -514,15 +534,14 @@ program define s2s, eclass byable(recall) sortpreserve
 				if "`lny'"~= "" gen double `yh' = exp(__xb_bs`b' + __ut + __et)
 				else gen double `yh' = __xb_bs`b' + __ut + __et
 
-				s2s_indicators, welfare(`yh') weight(`wtstats') indicators(`indicators') cluster(`cluster') strata(`strata') pline(`pline') pline2(`pline2') vline(`vline') alpha(`alpha') resmat(`all') std
+				s2s_indicators, welfare(`yh') weight(`wtstats') indicators(`indicators') cluster(`cluster') strata(`strata') pline(`pline') pline2(`pline2') vline(`vline') alpha(`alpha') resmat(`all') std method("`method'")
 				
 				noisily _dots `i' 0
 			} //rep
 			
 			clear
 			mat colnames `all' = `poor' `poor_var' `gap' `gap_var' `pgap' `pgap_var' `epoor' `epoor_var' `vpoor' `vpoor_var' `mean' `mean_var' `m5' `m5_var' `m10' `m10_var' `m25' `m25_var' `m50' `m50_var' `m75' `m75_var' `m90' `m90_var' `m95' `m95_var'
-			
-			mat list `all'
+						
 			svmat `all', names(col)					
 			mat drop `all'
 			
@@ -554,6 +573,202 @@ program define s2s, eclass byable(recall) sortpreserve
 		}
 	} //normal method - std
 	
+	* Point estimates - probit	
+	qui if "`method'"=="probit" {
+		display _newline " "
+		noi _dots 0, title(Point estimates - Running with `rep' reps) reps(`rep')
+		use `dataori' if `touse', clear
+		xtprobit `poorbit' `okvarlist' `weight' if `by'==`from', i(`cluster')
+		scalar n_m = r(N)
+		mat b= e(b)
+		mat V= J(1,1,.)
+		scalar varu= e(sigma_u)^2
+		mat V[1,1]= varu		
+		scalar r2_m = .
+		
+		set seed `seed'
+		forv i= 1/`rep'  {
+			clear			
+			tempvar yh
+			drawnorm __ut, n(`nsdata') cov(V) double
+			gen __obid= _n
+			sort __obid			
+			merge 1:1 __obid using `datatoxb', nogen
+							
+            gen double `yh' = `__xb' + __ut
+						
+			//function on the indicators
+			s2s_indicators, welfare(`yh') weight(`wtstats') indicators(`indicators') cluster(`cluster') method("`method'") strata(`strata') pline(`pline') resmat(`allp')
+			
+			noisily _dots `i' 0
+		} //rep
+		noisily _dots
+		
+		clear			
+		mat colnames `allp' = poor
+		svmat `allp', names(col)
+		
+		//INDicator list to be fixed
+		local vlist1 poor 
+		foreach var of local vlist1 {
+			sum `var'
+			local est0_`var' = r(mean)
+		}
+
+		/*SAVE SIMULATED DATASET //need to add in original hhid 
+		if "`saving'"~="" {
+			use `dataset1', clear  
+			qui forv i=2/`rep' { 
+				merge 1:1 __obid using `dataset`i'', nogen
+			}
+			rename __obid id
+			keep id yh_s*
+			save "`saving'", `replace'
+			noi dis `"file "`saving'" saved"'
+		} //save
+		*/		
+	} //probit est point
+
+	* Standard errors - probit
+	qui if "`method'"=="probit" {
+		display _newline " "
+		noi _dots 0, title(Standard errors - Running with `rep' reps) reps(`rep')
+		use `dataori' if `touse', clear
+		xtprobit `poorbit' `okvarlist' `weight' if `by'==`from', i(`cluster')
+
+		scalar n_m = r(N)
+		mat b= e(b)
+		mat V= J(1,1,.)
+		scalar varu= e(sigma_u)^2
+		mat V[1,1]= varu		
+		scalar r2_m = .
+		
+		set seed `seed'
+		forv i= 1/`rep' {
+			clear
+			tempvar yh
+
+			drawnorm __ut, n(`nsdata') cov(V) double
+			gen __obid= _n
+			sort __obid			
+			merge 1:1 __obid using `datatoxb', nogen
+					
+			gen double `yh' = `__xb' + __ut
+			
+			//function on the indicators
+			s2s_indicators, welfare(`yh') weight(`wtstats') indicators(`indicators') cluster(`cluster') method("`method'") strata(`strata') pline(`pline') resmat(`all') std
+			
+			noisily _dots `i' 0
+		} //rep
+		
+		clear
+		mat colnames `all' = poor poor_var 		
+		svmat `all', names(col)
+		
+		//INDicator list to be fixed, this order	
+		sum poor
+		scalar seexppoor = r(Var)/r(N) 
+		su poor_var
+		local se_poor = (r(mean) + seexppoor)^0.5			
+	} //probit standard error
+	
+	* Point estimates - logit	
+	qui if "`method'"=="logit" {
+		display _newline " "
+		noi _dots 0, title(Point estimates - Running with `rep' reps) reps(`rep')
+		use `dataori' if `touse', clear
+		qui xtlogit `poorbit' `okvarlist' `weight' if `by'==`from', i(`cluster')
+		scalar n_m = r(N)
+		mat b= e(b)
+		mat V= J(1,1,.)
+		scalar varu= e(sigma_u)^2
+		mat V[1,1]= varu
+		scalar r2_m = .
+		
+		set seed `seed'
+		qui forv i= 1/`rep'  {
+			clear
+			tempvar yh
+			drawnorm __ut, n(`nsdata') cov(V) double			
+			gen __obid= _n
+			sort __obid			
+			merge 1:1 __obid using `datatoxb', nogen
+						
+			gen double `yh' = `__xb' + __ut
+			
+			//function on the indicators
+			s2s_indicators, welfare(`yh') weight(`wtstats') indicators(`indicators') cluster(`cluster') method("`method'") strata(`strata') pline(`pline') resmat(`allp')
+
+			noisily _dots `i' 0
+		} //rep
+		noisily _dots
+		
+		clear			
+		mat colnames `allp' = poor
+		svmat `allp', names(col)
+		
+		//INDicator list to be fixed
+		local vlist1 poor 
+		foreach var of local vlist1 {
+			sum `var'
+			local est0_`var' = r(mean)
+		}
+		
+		/*SAVE SIMULATED DATASET //need to add in original hhid 
+		if "`saving'"~="" {
+			use `dataset1', clear  
+			qui forv i=2/`rep' { 
+				merge 1:1 __obid using `dataset`i'', nogen
+			}
+			rename __obid id
+			keep id yh_s*
+			save "`saving'", `replace'
+			noi dis `"file "`saving'" saved"'
+		} //save
+	    */
+	} //logit est point
+	
+	* Standard errors - logit
+	qui if "`method'"=="logit" {
+		display _newline " "
+		noi _dots 0, title(Standard errors - Running with `rep' reps) reps(`rep')
+		use `dataori' if `touse', clear
+		qui xtlogit `poorbit' `okvarlist' `weight' if `by'==`from', i(`cluster')
+		scalar n_m = r(N)
+		mat b= e(b)
+		mat V= J(1,1,.)
+		scalar varu= e(sigma_u)^2
+		mat V[1,1]= varu
+		scalar r2_m = .
+		
+		set seed `seed'
+		qui forv i= 1/`rep'  {
+			clear
+			tempvar yh
+			drawnorm __ut, n(`nsdata') cov(V) double			
+			gen __obid= _n
+			sort __obid			
+			merge 1:1 __obid using `datatoxb', nogen
+			
+			gen double `yh' = `__xb' + __ut
+			
+			//function on the indicators
+			s2s_indicators, welfare(`yh') weight(`wtstats') indicators(`indicators') cluster(`cluster') method("`method'") strata(`strata') pline(`pline') resmat(`all') std
+			
+			noisily _dots `i' 0
+		} //rep
+		
+		clear
+		mat colnames `all' = poor poor_var 		
+		svmat `all', names(col)
+		
+		//INDicator list to be fixed, this order	
+		sum poor
+		scalar seexppoor = r(Var)/r(N) 
+		su poor_var
+		local se_poor = (r(mean) + seexppoor)^0.5			
+	} //logit standard error
+
 	//return to user
 	display _newline ""
 	display _newline in ye "Method: `method'"	
@@ -561,19 +776,22 @@ program define s2s, eclass byable(recall) sortpreserve
 	di as text _col(60) "{c |}" "   Estimate    " "{c |}" "    Std. err.  "
 	di as text "{hline 59}{c +}{hline 15}{c +}{hline 15}"
 	di as text "Imputed Headcount poverty rate (%)" _col(60) "{c |}" _col(62) %9.2f `=100*`est0_poor'' _col(76) "{c |}" %9.2f `=100*`se_poor''
-	di as text "Imputed FGT(`alpha') %" _col(60) "{c |}" _col(62) %9.2f `=100*`est0_gap'' _col(76) "{c |}" %9.2f `=100*`se_gap''
-	di as text "Imputed FGT(`alpha') %, among the poor" _col(60) "{c |}" _col(62) %9.2f `=100*`est0_pgap'' _col(76) "{c |}" %9.2f `=100*`se_pgap''
-	if "`pline2'"~="" {
-		di as text "Imputed extreme poverty (%)" _col(60) "{c |}" _col(62) %9.2f `=100*`est0_epoor'' _col(76) "{c |}" %9.2f  `=100*`se_epoor''
-	}
-	if "`vline'"~="" {
-		di as text "Imputed near poverty (%)" _col(60) "{c |}" _col(62) %9.2f `=100*`est0_vpoor'' _col(76) "{c |}" %9.2f  `=100*`se_vpoor''
-	}
-	di as text "Mean consumption" _col(60) "{c |}" _col(62) %9.2f `est0_mean' _col(76) "{c |}" %9.2f `se_mean'
-	local vlist1 5 10 25 50 75 90 95
-	foreach var1 of local vlist1 {
-		di as text "Mean percentile `var1'th" _col(60) "{c |}" _col(62) %9.2f `est0_m`var1'' _col(76) "{c |}" %9.2f `se_m`var1''
-	}
+	
+	if "`method'"=="empirical" | "`method'"=="normal" {
+		di as text "Imputed FGT(`alpha') %" _col(60) "{c |}" _col(62) %9.2f `=100*`est0_gap'' _col(76) "{c |}" %9.2f `=100*`se_gap''
+		di as text "Imputed FGT(`alpha') %, among the poor" _col(60) "{c |}" _col(62) %9.2f `=100*`est0_pgap'' _col(76) "{c |}" %9.2f `=100*`se_pgap''
+		if "`pline2'"~="" {
+			di as text "Imputed extreme poverty (%)" _col(60) "{c |}" _col(62) %9.2f `=100*`est0_epoor'' _col(76) "{c |}" %9.2f  `=100*`se_epoor''
+		}
+		if "`vline'"~="" {
+			di as text "Imputed near poverty (%)" _col(60) "{c |}" _col(62) %9.2f `=100*`est0_vpoor'' _col(76) "{c |}" %9.2f  `=100*`se_vpoor''
+		}
+		di as text "Mean consumption" _col(60) "{c |}" _col(62) %9.2f `est0_mean' _col(76) "{c |}" %9.2f `se_mean'
+		local vlist1 5 10 25 50 75 90 95
+		foreach var1 of local vlist1 {
+			di as text "Mean percentile `var1'th" _col(60) "{c |}" _col(62) %9.2f `est0_m`var1'' _col(76) "{c |}" %9.2f `se_m`var1''
+		}
+	}	
 	di as text "{hline 59}{c BT}{hline 15}{c BT}{hline 15}"
 	
 	ereturn clear
@@ -583,31 +801,33 @@ program define s2s, eclass byable(recall) sortpreserve
     ereturn scalar pov_imp = `=100*`est0_poor''
 	ereturn scalar pov_var = (`=100*`se_poor'')^2
 	
-	ereturn scalar fgt`alpha'_imp = `=100*`est0_gap''
-	ereturn scalar fgt`alpha'_var = (`=100*`se_gap'')^2
-	
-	ereturn scalar pfgt`alpha'_imp = `=100*`est0_pgap''
-	ereturn scalar pfgt`alpha'_var = (`=100*`se_pgap'')^2
-	
-	if "`pline2'"~="" {
-		ereturn scalar exp_imp = `=100*`est0_epoor''
-		ereturn scalar exp_var = (`=100*`se_epoor'')^2
+	if "`method'"=="empirical" | "`method'"=="normal" {
+		ereturn scalar fgt`alpha'_imp = `=100*`est0_gap''
+		ereturn scalar fgt`alpha'_var = (`=100*`se_gap'')^2
+		
+		ereturn scalar pfgt`alpha'_imp = `=100*`est0_pgap''
+		ereturn scalar pfgt`alpha'_var = (`=100*`se_pgap'')^2
+		
+		if "`pline2'"~="" {
+			ereturn scalar exp_imp = `=100*`est0_epoor''
+			ereturn scalar exp_var = (`=100*`se_epoor'')^2
+		}
+		
+		if "`vline'"~="" {
+			ereturn scalar np_imp = `=100*`est0_vpoor''
+			ereturn scalar np_var = (`=100*`se_vpoor'')^2
+		}
+		
+		ereturn scalar mean_imp = `est0_mean' 
+		ereturn scalar mean_var = `se_mean'^2
+		
+		local vlist1 5 10 25 50 75 90 95
+		foreach var1 of local vlist1 {
+			ereturn scalar p`var1'_imp = `est0_m`var1'' 
+			ereturn scalar p`var1'_var = `se_m`var1''^2
+		}
 	}
 	
-	if "`vline'"~="" {
-		ereturn scalar np_imp = `=100*`est0_vpoor''
-		ereturn scalar np_var = (`=100*`se_vpoor'')^2
-	}
-	
-	ereturn scalar mean_imp = `est0_mean' 
-	ereturn scalar mean_var = `se_mean'^2
-	
-	local vlist1 5 10 25 50 75 90 95
-	foreach var1 of local vlist1 {
-		ereturn scalar p`var1'_imp = `est0_m`var1'' 
-		ereturn scalar p`var1'_var = `se_m`var1''^2
-	}
-
 	ereturn scalar N1 = `nfdata'
 	ereturn scalar N2 = `nsdata'			
 end
