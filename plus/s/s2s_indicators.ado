@@ -1,7 +1,7 @@
 *! version 1.0  20Feb2025
 *! Minh Cong Nguyen - mnguyen3@worldbank.org
 *! Hai-Anh Hoang Dang - hdang@worldbank.org
-*! Ksenia Abanokova - kabanokova@worldbank.org
+*! Kseniya Abanokova - kabanokova@worldbank.org
 
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by

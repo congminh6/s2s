@@ -3,7 +3,7 @@
 help for {cmd:s2s}
 {right:Hai-Anh H. Dang}
 {right:Minh Cong Nguyen}
-{right:Ksenia Abanokova}
+{right:Kseniya Abanokova}
 {hline}
 
 {title:{cmd:s2s} - survey to survey imputation tool}
@@ -23,7 +23,9 @@ to{cmd:(}{it:numlist}{cmd:)} pline{cmd:(}{it:varname}{cmd:)} method{cmd:(}{it:st
 
 {p 4 4 2}  Recent papers that review this method and its applications include Dang, Jolliffe and Carletto (2019) and Dang and Lanjouw (2023).{p_end}
 
-{p 4 4 2}  This program is designed for datasets with at least two cross-sectional surveys, where consumption data are available in the survey that we impute from (the base survey) but are missing in the survey of interest (the target survey(s) that we impute into). The control variables are non-missing in both surveys.{p_end}
+{p 4 4 2}  This program is designed for datasets with at least two cross-sectional surveys, where consumption data are available in the survey that we impute from (the base survey) but are missing in the survey of interest (the target survey(s) that we impute into). The control variables are non-missing in both surveys.{p_end} 
+
+{p 4 4 2}  User should apply svyset before running the command. If the data is not with svysetting, the program will apply the basic svysetting based on the user inputs from cluster(), strata(), and wtstats() as below: svyset `cluster' [w= `wtstats'], strata(`strata') singleunit(certainty) {p_end}
 
 {marker options}{...}
 {title:Options}
@@ -47,6 +49,12 @@ to{cmd:(}{it:numlist}{cmd:)} pline{cmd:(}{it:varname}{cmd:)} method{cmd:(}{it:st
 
 {pmore} 
 {cmd:empirical}: using the linear regression (OLS) model with the empirical distributions of the error terms.
+
+{pmore}
+{cmd:probit}: using the probit regression model.
+
+{pmore}
+{cmd:logit}: using the logit regression model.
 
 {phang}
 {opt pline(varname)} specifies the variable that indicates the poverty line. This variable has a numeric format.
@@ -164,7 +172,7 @@ error terms assumed to be normal, where the poverty line in 2008 is 40.
 {title:Authors}
 	{p 4 4 2}Hai-Anh H. Dang, Senior Economist, World Bank, USA, hdang@worldbank.org{p_end}
 	{p 4 4 2}Minh Cong Nguyen, Senior Economist, World Bank, USA, mnguyen3@worldbank.org{p_end}
-	{p 4 4 2}Ksenia Abanokova, Economist, World Bank, USA, kabanokova@worldbank.org{p_end}
+	{p 4 4 2}Kseniya Abanokova, Economist, World Bank, USA, kabanokova@worldbank.org{p_end}
 
 
 {title:Suggested citation}

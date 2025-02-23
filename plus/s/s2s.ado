@@ -1,7 +1,7 @@
 *! version 1.0  20Feb2025
 *! Minh Cong Nguyen - mnguyen3@worldbank.org
 *! Hai-Anh Hoang Dang - hdang@worldbank.org
-*! Ksenia Abanokova - kabanokova@worldbank.org
+*! Kseniya Abanokova - kabanokova@worldbank.org
 
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -119,13 +119,20 @@ program define s2s, eclass byable(recall) sortpreserve
 	local flist `"`varlist' `wvar' `by' `cluster' `strata' `pline'"'
 	local okvarlist `varlist'
 	markout `touse' `flist' 
-	*svyset `cluster' [w= `wtstats'], strata(`strata') singleunit(centered)
 	
 	*** Poverty status in the base survey 
 	tempvar pr	
 	if "`lny'" ~= "" qui gen `pr'= `lhs'< ln(`pline') if `lhs'<. & `by'==`from' & `touse'
 	else qui gen `pr'= `lhs'< `pline' if `lhs'<. & `by'==`from' & `touse'
 	local poorbit `pr'
+	
+	** Check svysetting
+	cap svydescribe
+	if _rc!=0 {
+		noi dis _newline "Waring: svyset was not applied in the data. Apply the basic svysetting:"
+		noi dis `"svyset `cluster' [w= `wtstats'], strata(`strata') singleunit(certainty)"'
+		svyset `cluster' [w= `wtstats'], strata(`strata') singleunit(certainty)
+	}
 
 	** Save original data	
 	tempfile dataori datafrm datato dataset datatobs
