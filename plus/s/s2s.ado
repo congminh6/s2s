@@ -19,8 +19,8 @@
 cap program drop s2s
 program define s2s, eclass byable(recall) sortpreserve
                  
-	syntax varlist [if] [in] [aweight fweight], by(varname numeric) from(numlist max=1) to(numlist max=1) method(string) pline(varname numeric) cluster(varname numeric) ///
-	[WTstats(varname numeric) strata(varname numeric) Alpha(integer 1) pline2(varname numeric) VLine(varname numeric) rep(integer 50) Brep(integer 10) seed(integer 1234567) bseed(integer 7654321) SAVing(string) REPLACE LNY] 
+	syntax varlist [if] [in] [aweight fweight], by(varname numeric) from(numlist max=1) to(numlist max=1)  pline(varname numeric) cluster(varname numeric) ///
+	[method(string) WTstats(varname numeric) strata(varname numeric) Alpha(integer 1) pline2(varname numeric) VLine(varname numeric) rep(integer 50) Brep(integer 10) seed(integer 1234567) bseed(integer 7654321) SAVing(string) REPLACE LNY] 
 	
 	*NOCONStant INDicators(string) 
 	
@@ -36,10 +36,14 @@ program define s2s, eclass byable(recall) sortpreserve
 		noi dis in yellow _newline `"Warning: When the "lny" option is specified, ensure that the left-hand side variable is expressed in logarithmic terms, while the poverty line variables remain in level terms."'
 	}
 	
-	local method `=lower("`method'")'
-	if "`method'"~="empirical" & "`method'"~="normal" & "`method'"~="probit" & "`method'"~="logit" {
-		noi dis as error "Method `method' is now allowed. Allowed methods: empirical, normal, probit, and logit."
-		error 198
+	//method
+	if "`method'"=="" local method normal
+	else {
+		local method `=lower("`method'")'
+		if "`method'"~="empirical" & "`method'"~="normal" & "`method'"~="probit" & "`method'"~="logit" {
+			noi dis as error "Method `method' is now allowed. Allowed methods: empirical, normal, probit, and logit."
+			error 198
+		}
 	}
 	
 	preserve
