@@ -25,9 +25,11 @@ to{cmd:(}{it:numlist}{cmd:)} pline{cmd:(}{it:varname}{cmd:)} cluster{cmd:(}{it:v
 
 {p 4 4 2}  This program is designed for datasets with at least two surveys, where consumption data are available in the survey that we impute from (the base survey) but are missing in the survey(s) of interest (the target survey(s) that we impute into). The control variables are non-missing in both surveys.{p_end} 
 
-{p 4 4 2}  The base survey and the target survey can be of a similar design (i.e., imputing from a household consumption survey into another household consumption survey) or a different design (i.e., imputing from a household consumption survey into a labor force survey). Users should check that the same control variables have comparable distributions in both surveys. If not, it can be useful to implement standardization procedures to ensure these control variables have similar distributions (Dang et al., 2017; Sarr et al., 2025).{p_end} 
+{p 4 4 2}  The base survey and the target survey can be of a similar design (i.e., imputing from a household consumption survey into another household consumption survey) or a different design (i.e., imputing from a household consumption survey into a labor force survey). Users should check that the same control (predictor) variables have comparable distributions in both surveys. If not, it can be useful to implement standardization procedures to ensure these control variables have similar distributions (Dang et al., 2017; Sarr et al., 2025).{p_end} 
 
-{p 4 4 2}  The estimated standard errors are obtained using bootstrap method, except for the {opt method(probit)} and {opt method(logit)} options where the standard errors are analytical.{p_end} 
+{p 4 4 2}  It is also useful to inspect and remove missing observations with the control variables in both the base survey and the target survey to avoid possible issues before running the program. That is, the control variables for each survey should the same number of observations.{p_end} 
+
+{p 4 4 2}  The estimated standard errors are obtained using the bootstrap method, except for the {opt method(probit)} and {opt method(logit)} options where the standard errors are analytical.{p_end} 
 
 {p 4 4 2}  To appropriately control for complex survey design, users should apply the Stata complex survey design command {cmd:svyset} before running {cmd:s2s}. If the data is not with svysetting, the program will apply the basic svysetting based on users' inputs from {opt cluster()}, {opt strata()}, and {opt wtstats()} as below: {cmd:svyset `cluster' [w= `wtstats'], strata(`strata') singleunit(certainty)}.{p_end}
 
@@ -139,7 +141,7 @@ By typing {it:ereturn list}, the following results are reported:
 
 {title:Examples}
 
-{pstd} We provide some illustrative examples using the Tanzania National Panel Survey (TZNPS) 2019/20, and 2020/21 rounds. These datasets were collected by the Living Standards Measurement Unit (LSMS), World Bank and were analyzed in Dang et al. (2024). The below data is provided in the package.{p_end}
+{pstd} We provide some illustrative examples using the Tanzania National Panel Survey (TZNPS) 2019/20, and 2020/21 rounds. These datasets were collected by the Living Standards Measurement Unit (LSMS), World Bank and were analyzed in Dang et al. (2024). The example data is provided in the package.{p_end}
 
 {dlgtab:Example 1}
 
@@ -166,6 +168,18 @@ By typing {it:ereturn list}, the following results are reported:
 
 {pstd}* Model 9 {p_end} 
 {phang2}{cmd:. s2s dep hhsize age female pri lws ups age0to14sh age15to24sh age60tosh wageemp selfemp area_1 area_2 area_4 lnpcewg, by(year) from(2019) to(2021) pline(povline) method(normal) cluster(psu) wt(hhszwt) strata(strata) pline2(epovline) vline(vline) lny rep(1000) brep(1000)}{p_end}
+
+{pstd}* Comparing with estimates using the actual consumption data {p_end} 
+{phang2}{cmd:. use Tanzania_dataset.dta, clear}{p_end}    
+{phang2}{cmd:. svyset psu [w= hhszwt ], strata( strata) singleunit(certainty)}{p_end}
+{phang2}{cmd:. gen vline = povline*1.25}{p_end}
+{phang2}{cmd:. generate poor = lnpcex<ln(povline)}{p_end}
+{phang2}{cmd:. generate epoor = lnpcex<ln(epovline)}{p_end}
+{phang2}{cmd:. gen vpoor = ( lnpcex >= ln( povline) & lnpcex < ln( vline ))}{p_end}
+{phang2}{cmd:. generate pcex = exp( lnpcex)}{p_end}
+{phang2}{cmd:. generate fgt = poor*(( povline - pcex )/ povline )^(1)}{p_end}
+{phang2}{cmd:. svy: mean poor epoor vpoor fgt if year == 2021}{p_end}
+{phang2}{cmd:. svy, subpop(poor): mean fgt if year == 2021}{p_end}
 
 {dlgtab:Example 2}
 
@@ -205,6 +219,8 @@ By typing {it:ereturn list}, the following results are reported:
 
 {title:References}
 
+{p 4 4 2} Dang, H.-A. H. and Nguyen, M.C. (2014) POVIMP: Stata Module to Provide Poverty Estimates in the Absence of Actual Consumption Data. Statistical Software Components S457934, Boston College, Department of Economics.{p_end}
+
 {p 4 4 2} Dang, H.-A. H. and Lanjouw, P. F. (2023). "Regression-based Imputation for Poverty Measurement in Data Scarce Settings". In Jacques Silber. (Eds.). {it:Handbook of Research on Measuring Poverty and Deprivation.} Edward Elgar Press.{p_end}
 
 {p 4 4 2} Dang, H.-A. H., Jolliffe, D., & Carletto, C. (2019). Data gaps, data incomparability, and data imputation: A review of poverty measurement methods for data‐scarce environments. {it:Journal of Economic Surveys,} 33(3), 757-797. {p_end}
@@ -228,7 +244,7 @@ By typing {it:ereturn list}, the following results are reported:
 
 {p 4 4 2}We use the user-written program {cmd:epctile} from {browse "https://staskolenikov.net/stata":{it:https://staskolenikov.net/stata}} that provides estimation and inference for percentiles.{p_end}
 
-{p 4 4 2}We would like to thank various colleagues at and outside the World Bank for comments on previous versions of the program. This is a work in progress. This program builds on and add more modelling options to a previous version named {cmd:povimp}. (But note {cmd:povimp} offers additional test statistics for imputed headcount poverty).{p_end}
+{p 4 4 2}We would like to thank various colleagues at and outside the World Bank for comments on previous versions of the program. This is a work in progress. This program builds on and add more modelling options to a previous version named {cmd:povimp} (Dang and Nguyen, 2014). (But note {cmd:povimp} offers additional test statistics for imputed headcount poverty).{p_end}
 
 {p 4 4 2}We would like to thank the United States Agency for International Development (USAID) and UK Foreign Commonwealth and Development Office (FCDO) for funding assistance. {p_end}
 
