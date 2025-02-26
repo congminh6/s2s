@@ -27,11 +27,11 @@ to{cmd:(}{it:numlist}{cmd:)} pline{cmd:(}{it:varname}{cmd:)} cluster{cmd:(}{it:v
 
 {p 4 4 2}  The base survey and the target survey can be of a similar design (i.e., imputing from a household consumption survey into another household consumption survey) or a different design (i.e., imputing from a household consumption survey into a labor force survey). Users should check that the same control (predictor) variables have comparable distributions in both surveys. If not, it can be useful to implement standardization procedures to ensure these control variables have similar distributions (Dang et al., 2017; Sarr et al., 2025).{p_end} 
 
-{p 4 4 2}  It is also useful to inspect and remove missing observations with the control variables in both the base survey and the target survey to avoid possible issues before running the program. That is, the control variables for each survey should the same number of observations.{p_end} 
+{p 4 4 2}  It is also useful to inspect and remove missing observations with the control variables in both the base survey and the target survey to avoid potential issues before running the program. That is, the control variables for each survey should have the same number of observations.{p_end} 
 
 {p 4 4 2}  The estimated standard errors are obtained using the bootstrap method, except for the {opt method(probit)} and {opt method(logit)} options where the standard errors are analytical.{p_end} 
 
-{p 4 4 2}  To appropriately control for complex survey design, users should apply the Stata complex survey design command {cmd:svyset} before running {cmd:s2s}. If the data is not with svysetting, the program will apply the basic svysetting based on users' inputs from {opt cluster()}, {opt strata()}, and {opt wtstats()} as below: {cmd:svyset `cluster' [w= `wtstats'], strata(`strata') singleunit(certainty)}.{p_end}
+{p 4 4 2}  To appropriately control for complex survey design, users should apply the Stata complex survey design command {cmd:svyset} before running {cmd:s2s}. If the data are not svyset, the program will apply the basic svysetting based on users' inputs from {opt cluster()}, {opt strata()}, and {opt wtstats()} as below: {cmd:svyset `cluster' [w= `wtstats'], strata(`strata') singleunit(certainty)}.{p_end}
 
 {marker options}{...}
 {title:Options}
@@ -141,7 +141,7 @@ By typing {it:ereturn list}, the following results are reported:
 
 {title:Examples}
 
-{pstd} We provide some illustrative examples using the Tanzania National Panel Survey (TZNPS) 2019/20, and 2020/21 rounds. These datasets were collected by the Living Standards Measurement Unit (LSMS), World Bank and were analyzed in Dang et al. (2024). The example data is provided in the package.{p_end}
+{pstd} We provide some illustrative examples using the Tanzania National Panel Survey (TZNPS) 2019/20 and 2020/21 rounds. These datasets were collected by the Living Standards Measurement Unit (LSMS), World Bank and were analyzed in Dang et al. (2024). The example data are provided in the {cmd:s2s} package.{p_end}
 
 {dlgtab:Example 1}
 
@@ -201,7 +201,7 @@ By typing {it:ereturn list}, the following results are reported:
 
 {dlgtab:Example 4}
 
-{pstd} We can impute for headcount poverty using the probit model instead of the linear regression model. All the other indicators are obtained using the linear regression as shown in Example 1. {p_end}
+{pstd} We can impute for headcount poverty using the probit model instead of the linear regression model.{p_end}
 
 {phang2}{cmd:. use Tanzania_dataset.dta, clear}{p_end}
 {phang2}{cmd:. clonevar dep = lnpcex}{p_end}
@@ -229,7 +229,7 @@ By typing {it:ereturn list}, the following results are reported:
 
 {p 4 4 2} Dang, H.-A. H., Kilic, T., Abanokova, K., & Carletto, C. (2024). Imputing Poverty Indicators without Consumption Data. World Bank Policy Research Working Paper no. 10867. {p_end}
 
-{p 4 4 2} Sarr, I., Dang, H. A. H., Guzman Gutierrez, C. S., Beltramo, T., & Verme, P. (2025). Using cross-survey imputation to estimate poverty for Venezuelan refugees in Colombia. {it:Social Indicators Research.} DOI: {browse "https://doi.org/10.1007/s11205-024-03492-8":{it:https://doi.org/10.1007/s11205-024-03492-8}} {p_end}
+{p 4 4 2} Sarr, I., Dang, H. A. H., Guzman Gutierrez, C. S., Beltramo, T., & Verme, P. (2025). Using cross-survey imputation to estimate poverty for Venezuelan refugees in Colombia. {it:Social Indicators Research.} DOI: {browse "https://doi.org/10.1007/s11205-024-03492-8":{https://doi.org/10.1007/s11205-024-03492-8}} {p_end}
 
 {title:Authors}
 	{p 4 4 2}Hai-Anh H. Dang, Senior Economist, World Bank, USA, hdang@worldbank.org{p_end}
