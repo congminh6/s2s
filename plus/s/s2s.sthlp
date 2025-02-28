@@ -383,7 +383,7 @@ s2s: Stata module to impute poverty in the absence of consumption (income) data.
 {browse "https://staskolenikov.net/stata":{it:https://staskolenikov.net/stata}} 
 that provides estimation and inference for percentiles.{p_end}
 
-{p 4 4 2}We would like to thank various colleagues at and outside the World 
+{p 4 4 2}We would like to thank Kit Baum and various colleagues at and outside the World 
 Bank for comments on previous versions of the program. This is a work in 
 progress. This program builds on and adds more modelling options to a previous 
 version named {cmd:povimp} (Dang and Nguyen, 2014). (But note {cmd:povimp} 
